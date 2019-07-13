@@ -1,0 +1,473 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# # Support Vector Machines and Kernels
+
+# ## Introduction
+# 
+# We will be using the wine quality data set for these exercises. This data set contains various chemical properties of wine, such as acidity, sugar, pH, and alcohol. It also contains a quality metric (3-9, with highest being better) and a color (red or white). The name of the file is `Wine_Quality_Data.csv`.
+
+# In[1]:
+
+
+from __future__ import print_function
+import os
+#Please set the path below as per your system data folder location
+#data_path = ['..', 'data']
+data_path = ['data']
+
+
+# ## Question 1
+# 
+# * Import the data.
+# * Create the target variable `y` as a 1/0 column where 1 means red.
+# * Create a `pairplot` for the dataset.
+# * Create a bar plot showing the correlations between each column and `y`
+# * Pick the most 2 correlated fields (using the absolute value of correlations) and create `X`
+# * Use MinMaxScaler to scale `X`. Note that this will output a np.array. Make it a DataFrame again and rename the columns appropriately.
+
+# In[2]:
+
+
+import pandas as pd
+import numpy as np
+
+filepath = os.sep.join(data_path + ['Wine_Quality_Data.csv'])
+data = pd.read_csv(filepath, sep=',')
+
+
+# In[5]:
+
+
+data.describe()
+#data.head()
+
+
+# In[8]:
+
+
+y = (data['color'] == 'red').astype(int)     # consider red = 1 and else = 0
+fields = list(data.columns[:-1])  # everything except "color"
+correlations = data[fields].corrwith(y)
+correlations.sort_values(inplace=True)
+correlations
+
+
+# In[9]:
+
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+get_ipython().run_line_magic('matplotlib', 'inline')
+
+sns.set_context('talk')
+sns.set_palette('dark')
+sns.set_style('white')
+
+
+# In[10]:
+
+
+sns.pairplot(data, hue='color')
+
+
+# In[14]:
+
+
+ax = correlations.plot(kind='bar')
+ax.set(ylim=[-1, 1], ylabel='pearson correlation');
+
+
+# In[15]:
+
+
+from sklearn.preprocessing import MinMaxScaler
+
+fields = correlations.map(abs).sort_values().iloc[-2:].index   # automatically finding the most correlated columns
+print(fields)
+X = data[fields]
+scaler = MinMaxScaler()
+X = scaler.fit_transform(X)
+X = pd.DataFrame(X, columns=['%s_scaled' % fld for fld in fields]) # making a dataframe of their columns
+print(X.columns)
+
+
+# ## Question 2
+# 
+# The goal for this question is to look at the decision boundary of a LinearSVC classifier on this dataset. Check out [this example](http://scikit-learn.org/stable/auto_examples/svm/plot_iris.html#sphx-glr-auto-examples-svm-plot-iris-py) in sklearn's documentation. 
+# 
+# * Fit a Linear Support Vector Machine Classifier to `X`, `y`.
+# * Pick 300 samples from `X`. Get the corresponding `y` value. Store them in variables `X_color` and `y_color`. This is because original dataset is too large and it produces a crowded plot.
+# * Modify `y_color` so that it has the value "red" instead of 1 and 'yellow' instead of 0.
+# * Scatter plot X_color's columns. Use the keyword argument "color=y_color" to color code samples.
+# * Use the code snippet below to plot the decision surface in a color coded way.
+# 
+# ```python
+# x_axis, y_axis = np.arange(0, 1, .005), np.arange(0, 1, .005)
+# xx, yy = np.meshgrid(x_axis, y_axis)
+# xx_ravel = xx.ravel()
+# yy_ravel = yy.ravel()
+# X_grid = pd.DataFrame([xx_ravel, yy_ravel]).T
+# y_grid_predictions = *[YOUR MODEL]*.predict(X_grid)
+# y_grid_predictions = y_grid_predictions.reshape(xx.shape)
+# ax.contourf(xx, yy, y_grid_predictions, cmap=plt.cm.autumn_r, alpha=.3)
+# ```
+# 
+# Feel free to experiment with different parameter choices for LinearSVC and see the decision boundary.
+
+# In[16]:
+
+
+from sklearn.svm import LinearSVC
+
+LSVC = LinearSVC() # or LSCV = LinearSVC(penalty= 'l2', C = 10.0)  ### regularization parameter
+LSVC.fit(X, y)
+
+X_color = X.sample(300, random_state=45)
+y_color = y.loc[X_color.index]                 # index gives the location of element in the list
+y_color = y_color.map(lambda r: 'red' if r == 1 else 'yellow')       # considering red calue for 1 and yellow for 0
+ax = plt.axes()
+ax.scatter(
+    X_color.iloc[:, 0], X_color.iloc[:, 1],
+    color=y_color, alpha=1)
+# -----------
+x_axis, y_axis = np.arange(0, 1.005, .005), np.arange(0, 1.005, .005)
+xx, yy = np.meshgrid(x_axis, y_axis)
+xx_ravel = xx.ravel()                   # "ravel" Return a contiguous flattened array.
+yy_ravel = yy.ravel()
+X_grid = pd.DataFrame([xx_ravel, yy_ravel]).T
+y_grid_predictions = LSVC.predict(X_grid)
+y_grid_predictions = y_grid_predictions.reshape(xx.shape)
+ax.contourf(xx, yy, y_grid_predictions, cmap=plt.cm.autumn_r, alpha=.3)
+# -----------
+ax.set(
+    xlabel=fields[0],
+    ylabel=fields[1],
+    xlim=[0, 1],
+    ylim=[0, 1],
+    title='decision boundary for LinearSVC');
+
+
+# ## Question 3
+# 
+# Let's now fit a Gaussian kernel SVC and see how the decision boundary changes.
+# 
+# * Consolidate the code snippets in Question 2 into one function which takes in an estimator, `X` and `y`, and produces the final plot with decision boundary. The steps are:
+#     <ol>
+#      <li> fit model
+#      <li> get sample 300 records from X and the corresponding y's
+#      <li> create grid, predict, plot using ax.contourf
+#      <li> add on the scatter plot
+#     </ol>
+# * After copying and pasting code, make sure the finished function uses your input `estimator` and not the LinearSVC model you built.
+# * For the following values of `gamma`, create a Gaussian Kernel SVC and plot the decision boundary.  
+# `gammas = [.5, 1, 2, 10]`
+# * Holding `gamma` constant, for various values of `C`, plot the decision boundary. You may try  
+# `Cs = [.1, 1, 10]`
+
+# In[17]:
+
+
+def plot_decision_boundary(estimator, X, y):
+    estimator.fit(X, y)
+    X_color = X.sample(300)
+    y_color = y.loc[X_color.index]
+    y_color = y_color.map(lambda r: 'red' if r == 1 else 'yellow')
+    x_axis, y_axis = np.arange(0, 1, .005), np.arange(0, 1, .005)
+    xx, yy = np.meshgrid(x_axis, y_axis)
+    xx_ravel = xx.ravel()
+    yy_ravel = yy.ravel()
+    X_grid = pd.DataFrame([xx_ravel, yy_ravel]).T
+    y_grid_predictions = estimator.predict(X_grid)          # applying estimator on our domain
+    y_grid_predictions = y_grid_predictions.reshape(xx.shape)  # reshape data
+
+    fig, ax = plt.subplots(figsize=(10, 10))
+    ax.contourf(xx, yy, y_grid_predictions, cmap=plt.cm.autumn_r, alpha=.3) # contour plot
+    ax.scatter(X_color.iloc[:, 0], X_color.iloc[:, 1], color=y_color, alpha=1)  # scater plot
+    ax.set(
+        xlabel=fields[0],
+        ylabel=fields[1],
+        title=str(estimator))
+
+
+# In[18]:
+
+
+from sklearn.svm import SVC
+
+gammas = [.5, 1, 2, 10]   # gamma varies : gamma is kernal coefficient
+for gamma in gammas:
+    SVC_Gaussian = SVC(kernel='rbf', gamma=gamma)
+    plot_decision_boundary(SVC_Gaussian, X, y)
+
+
+# In[19]:
+
+
+Cs = [.1, 1, 10]     # gamma constant , but we have C,    C is penalty term for the error
+for C in Cs:
+    SVC_Gaussian = SVC(kernel='rbf', gamma=2, C=C)
+    plot_decision_boundary(SVC_Gaussian, X, y)
+
+
+# ## Question 3A
+# 
+# Let's now fit a Polynomial kernel SVC with degree 3 and see how the decision boundary changes.
+# 
+# * Use the plot decision boundary function from the previous question and try the Polynomial Kernel SVC
+# * For various values of `C`, plot the decision boundary. You may try  
+# `Cs = [10,20,100,200]`
+# * Try to find out a C value that gives the best possible decision boundary
+
+# In[21]:
+
+
+# Try with Polynomial kernel SVC
+Cs = [10,20,100,200]
+for C in Cs:
+    SVC_Poly = SVC(kernel='poly', C=C, gamma = 'auto')
+    plot_decision_boundary(SVC_Poly, X, y)
+
+
+# ## Question 4
+# 
+# In this question, we will compare the fitting times between SVC vs Nystroem with rbf kernel.  
+# <br><br>
+# Jupyter Notebooks provide a useful magic function **`%timeit`** which executes a line and prints out the time it took to fit. If you type **`%%timeit`** in the beginning of the cell, then it will run the whole cell and output the running time.
+# 
+# * Re-load the wine quality data if you made changes to the original.
+# * Create `y` from data.color, and `X` from the rest of the columns.
+# * Use `%%timeit` to get the time for fitting an SVC with rbf kernel.
+# * Use `%%timeit` to get the time for the following: fit_transform the data with Nystroem and then fit a SGDClassifier.
+# 
+# Nystroem+SGD will take much shorter to fit. This difference will be more pronounced if the dataset was bigger.
+# 
+# * Make 5 copies of X and concatenate them
+# * Make 5 copies of y and concatenate them
+# * Compare the time it takes to fit the both methods above
+
+# In[29]:
+
+
+from sklearn.kernel_approximation import Nystroem
+from sklearn.svm import SVC
+from sklearn.linear_model import SGDClassifier
+
+y = data.color == 'red'
+X = data[data.columns[:-1]]
+
+kwargs = {'kernel': 'rbf'}         # comparing SVC and Nystreom for "kernal" and "rbf" method. 
+svc = SVC(**kwargs)
+nystroem = Nystroem(**kwargs)
+sgd = SGDClassifier(tol =0.01)      # adding tol to avoid having warning
+
+
+# In[30]:
+
+
+get_ipython().run_cell_magic('timeit', '', 'svc.fit(X, y)')
+
+
+# In[31]:
+
+
+get_ipython().run_cell_magic('timeit', '', 'X_transformed = nystroem.fit_transform(X)\nsgd.fit(X_transformed, y)')
+
+
+# In[34]:
+
+
+X2 = pd.concat([X]*5)       # Make 5 copies of X and concatenate them
+y2 = pd.concat([y]*5)
+
+#print(X)
+print(X2.shape)
+print(y2.shape)
+
+
+# In[35]:
+
+
+get_ipython().run_line_magic('timeit', 'svc.fit(X2, y2)')
+
+
+# In[36]:
+
+
+get_ipython().run_cell_magic('timeit', '', 'X2_transformed = nystroem.fit_transform(X2)\nsgd.fit(X2_transformed, y2)')
+
+
+# ## Question 5
+# Try Tuning hyper-parameters for the svm kernal using GridSearchCV
+# 
+# * Take the complete dataset
+# * Define y as data.color = 'red'
+# * Remaining columns as X
+# * Do a test and train split
+# * Set parameters for cross validation. Do this for as many values of gamma and C
+# * Using gridsearchcv to run through the data using the various parameters values
+# * Get the mean and standard deviation on the set for the various combination of gamma and C values
+# * print the best parameters in the training set
+
+# In[127]:
+
+
+from sklearn import svm
+from sklearn.utils import shuffle
+from sklearn.model_selection import train_test_split
+from sklearn.model_selection import GridSearchCV
+
+##   define X, Y and fix the scaling
+data = shuffle(data)
+
+y = (data['color'] == 'red').astype(int)     # consider red = 1 and else = 0
+fields = list(data.columns[:-1])  # everything except "color"
+X = data[fields]
+scaler = MinMaxScaler()
+X = scaler.fit_transform(X)
+X = pd.DataFrame(X, columns=['%s_scaled' % fld for fld in fields]) # making a dataframe of their columns
+
+X_train, X_test, y_train,y_test = train_test_split(X,y, test_size = 0.3, random_state= 40)
+
+
+
+# In[128]:
+
+
+gammas = [.5, 1, 2, 10]
+Cs = [.1,1,10]
+
+
+# In[129]:
+
+
+
+parameters = {'kernel':('linear', 'rbf'),'gamma': [.5, 1, 2, 10], 'C':[.1,1,10]}
+
+svc = svm.SVC()
+clf = GridSearchCV(svc, parameters, cv=5)
+clf.fit(X_train, y_train)
+#sorted(clf.cv_results_.keys())
+clf.best_params_
+
+
+# In[130]:
+
+
+best_clf = svm.SVC(kernel='rbf', C=10 , gamma=2)
+best_clf.fit(X_train,y_train)
+accuracy_score(y_test,best_clf.predict(X_test))
+
+
+# In[131]:
+
+
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
+
+CM = confusion_matrix(y_train, clf.predict(X_train))
+CM
+
+
+# In[132]:
+
+
+accuracy_score(y_train, best_clf.predict(X_train))
+
+
+# In[133]:
+
+
+### if we wanted to find the best soloution ourself
+## the point is the rest of elements are considered automaticly
+
+
+# In[134]:
+
+
+best_score = 0
+kernals = ['linear','rbf']
+
+
+for g in [.5, 1.0, 2.0, 10.0]:
+    for C in [.1,1.0,10.0]:
+        for k in kernals:
+            svc = svm.SVC(gamma=g, kernel = k, C=C)
+            #clf = GridSearchCV(svc, cv=5)
+            svc.fit(X_train, y_train)
+            acc_score = accuracy_score(y_train, svc.predict(X_train))
+            if best_score < acc_score :
+                best_score = acc_score
+                bg =g
+                bc= C
+                bk = k
+print(best_score,bg,bc,bk)
+
+
+# In[135]:
+
+
+best_clf_2 = svm.SVC(kernel='rbf', C=10 , gamma=10)
+best_clf_2.fit(X_train,y_train)
+accuracy_score(y_test,best_clf_2.predict(X_test))
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# ## Question 6
+#    Use the model from previous question to predict 
+#  
+#  * Perform the prediction on the test set  
+#  * Print confusion matrix, accuracy and classification report
+
+# In[ ]:
+
+
+
+
+
+# In[140]:
+
+
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
+from sklearn.metrics import classification_report
+
+
+# In[141]:
+
+
+from sklearn.metrics import confusion_matrix
+from sklearn.metrics import accuracy_score
+
+CM = confusion_matrix(y_train, best_clf.predict(X_train))
+CM
+
+
+# In[142]:
+
+
+print(classification_report(y_train, best_clf.predict(X_train)))
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
