@@ -1,0 +1,112 @@
+__author__ = "Mahdi Moslemi"
+__email__ = "moslemi.mahdi@gmail.com"
+
+EXPLANATION ON MACHINE LEARNING ALGORITHM APPLICATION ON DIFFERENT PROBLEM IN 10 STEPs
+
+
+NO_1:    READ YOUR FILE, DEFINE FEATURE AND TARGET DATA.
+
+         for this purpose we use the following sample code  :
+         feature_df = pd.read_csv(train_feature_file)
+         target_df = pd.read_csv(train_target_file)
+
+
+NO_2:    preprocessing on your data
+
+         find the categorical columns and numerical columns
+         
+         for categorical columsn we do the preprocesiing such as { dropping the duplicate data, having unique value 
+         (using Onehotencoder and labelencoder libraries ) or using LabelBinarizer()
+         
+         for numerical columns we should use dropna() or fillna() with the outlayer, or using one of the scaler such as
+         MinMaxScaler, StandardScaler , ... 
+         
+         EXAMPLE:
+         
+         from sklearn.preprocessing import LabelBinarizer 
+         lb = LabelBinarizer()
+         for col in ['intl_plan', 'voice_mail_plan', 'churned']:
+              data[col] = lb.fit_transform(data[col])
+         
+         
+         or,
+         
+         
+         from sklearn.preprocessing import LabelEncoder
+         le = LabelEncoder()
+         data['Activity'] = le.fit_transform(data.Activity)
+         data['Activity'].sample(5)
+         
+
+NO_3     mergeing your data again after cleaning it and generate your new data frame.
+
+
+NO_4     creating your train and test domain using cross_validation, test_modelisation, and shuffeling your data
+
+
+NO_5     we can check also if the column has any correlation with each other or not. in this case we can select our future data
+         for our model. the data which has the correlation more than 0.8 are usually considered (for logistic regression).
+         
+         we usually use all of the data for classification models such as KNN. 
+         
+         we can also make a grid sample as a test domain and apply our predictive model on that and visualize it.
+         
+
+NO_6     fit our model:
+
+         after having the train and test domain, we easily fitting it on our data, and get some result from it:
+         
+         EXAMPLE:
+         
+         from sklearn.linear_model import LogisticRegressionCV
+         # L1 regularized logistic regression
+         lr_l1 = LogisticRegressionCV(Cs=10, cv=4, penalty='l1', solver='saga',multi_class='multinomial',max_iter=100).fit(X_train, y_train)
+         
+
+NO_7     REESULTS 
+
+         in this part based on the defined problem , we like to have some information about our model,
+         it could be accuracy, importance of the parameters in model, confusion matrix, multiclass correlation,plotting the results...
+         
+         you can also using timing stuff, and GridSearchCV , and finding best_params, 
+         
+
+NO_8     MAKE YOUR FINAL DECISION AND CREATE THE BEST MODEL
+
+         EXAMPLE:
+         
+         from sklearn.pipeline import make_pipeline
+         from sklearn.decomposition import PCA
+         lr_std_pca = make_pipeline(StandardScaler(), PCA(), LinearRegression())
+         
+
+NO_9     DEPLOYEMENT
+
+         create a text file and write your model, the feature of your model, make it easy to be load in future and its application
+         on new test data
+         
+         EXAMPLE:
+         with open('linearregression.pickle', 'wb') as f:
+              pickle.dump(clf, f)
+         
+         forecast_set = clf.predict(X_lately)
+         df['Forecast'] = np.nan
+         last_date = df.iloc[-1].name
+         last_unix = last_date.timestamp()
+         one_day = 86400
+         next_unix = last_unix + one_day
+
+         for i in forecast_set:
+         next_date = datetime.datetime.fromtimestamp(next_unix)
+         next_unix += 86400
+         df.loc[next_date] = [np.nan for _ in range(len(df.columns)-1)]+[i]
+         df['Adj. Close'].plot()
+         df['Forecast'].plot()
+         plt.legend(loc=4)
+         plt.xlabel('Date')
+         plt.ylabel('Price')
+         plt.show()
+         
+         
+         
+NO_10    interpreting the result, and creating your final plot, and make your powerpoit 
