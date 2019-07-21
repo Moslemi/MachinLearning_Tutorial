@@ -1,0 +1,715 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# # Decision Trees Exercises
+
+# ## Introduction
+# 
+# We will be using the wine quality data set for these exercises. This data set contains various chemical properties of wine, such as acidity, sugar, pH, and alcohol. It also contains a quality metric (3-9, with highest being better) and a color (red or white). The name of the file is `Wine_Quality_Data.csv`.
+
+# ### Prerequisites
+# 
+# Install pydotplus and seaborn in your own virtual environment
+# 
+# !pip install pydotplus
+# 
+# !pip install seaborn
+
+# In[1]:
+
+
+from __future__ import print_function
+import os
+data_path = ['data']
+
+
+# ## Question 1
+# 
+# * Import the data and examine the features.
+# * We will be using all of them to predict `color` (white or red), but the colors feature will need to be integer encoded.
+
+# In[2]:
+
+
+import pandas as pd
+import numpy as np
+
+filepath = os.sep.join(data_path + ['Wine_Quality_Data.csv'])
+data = pd.read_csv(filepath, sep=',')
+
+
+# In[3]:
+
+
+data.head()
+
+
+# In[4]:
+
+
+data.dtypes
+
+
+# Convert the color feature to an integer. This is a quick way to do it using Pandas.
+
+# In[5]:
+
+
+data['color'] = data.color.replace('white',0).replace('red',1).astype(np.int)
+
+
+# ## Question 2
+# 
+# * Use `StratifiedShuffleSplit` to split data into train and test sets that are stratified by wine quality. If possible, preserve the indices of the split for question 5 below.
+# * Check the percent composition of each quality level for both the train and test data sets.
+
+# In[6]:
+
+
+# All data columns except for color
+feature_cols = [x for x in data.columns if x not in 'color']
+
+
+# In[7]:
+
+
+from sklearn.model_selection import StratifiedShuffleSplit
+
+# Split the data into two parts with 1000 points in the test data
+# This creates a generator
+strat_shuff_split = StratifiedShuffleSplit(n_splits=1, test_size=1000, random_state=42)
+
+# Get the index values from the generator
+train_idx, test_idx = next(strat_shuff_split.split(data[feature_cols], data['color']))
+
+# Create the data sets
+X_train = data.loc[train_idx, feature_cols]
+y_train = data.loc[train_idx, 'color']
+
+X_test = data.loc[test_idx, feature_cols]
+y_test = data.loc[test_idx, 'color']
+
+
+# Now check the percent composition of each quality level in the train and test data sets. The data set is mostly white wine, as can be seen below.
+
+# In[8]:
+
+
+y_train.value_counts(normalize=True).sort_index()
+
+
+# In[9]:
+
+
+y_test.value_counts(normalize=True).sort_index()
+
+
+# In[10]:
+
+
+X_train.head()
+
+
+# ## Question 3
+# 
+# * Fit a decision tree classifier with no set limits on maximum depth, features, or leaves.
+# * Determine how many nodes are present and what the depth of this (very large) tree is.
+# * Using this tree, measure the prediction error in the train and test data sets. What do you think is going on here based on the differences in prediction error?
+
+# In[11]:
+
+
+from sklearn.tree import DecisionTreeClassifier
+
+dt = DecisionTreeClassifier(random_state=42)
+dt = dt.fit(X_train, y_train)
+
+
+# The number of nodes and the maximum actual depth.
+
+# In[12]:
+
+
+dt.tree_.node_count, dt.tree_.max_depth
+
+
+# A function to return error metrics.
+
+# In[13]:
+
+
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+def measure_error(y_true, y_pred, label):
+    return pd.Series({'accuracy':accuracy_score(y_true, y_pred),
+                      'precision': precision_score(y_true, y_pred),
+                      'recall': recall_score(y_true, y_pred),
+                      'f1': f1_score(y_true, y_pred)},
+                      name=label)
+
+
+# The decision tree predicts a little better on the training data than the test data, which is consistent with (mild)  overfitting. Also notice the perfect recall score for the training data. In many instances, this prediction difference is even greater than that seen here. 
+
+# In[14]:
+
+
+# The error on the training and test data sets
+y_train_pred = dt.predict(X_train)
+y_test_pred = dt.predict(X_test)
+
+train_test_full_error = pd.concat([measure_error(y_train, y_train_pred, 'train'),
+                              measure_error(y_test, y_test_pred, 'test')],
+                              axis=1)
+
+train_test_full_error
+
+
+# ## Question 4
+# 
+# * Using grid search with cross validation, find a decision tree that performs well on the test data set. Use a different variable name for this decision tree model than in question 3 so that both can be used in question 6.
+# * Determine the number of nodes and the depth of this tree.
+# * Measure the errors on the training and test sets as before and compare them to those from the tree in question 3.
+
+# In[16]:
+
+
+from sklearn.model_selection import GridSearchCV
+
+param_grid = {'max_depth':range(1, dt.tree_.max_depth+1, 2),
+              'max_features': range(1, len(dt.feature_importances_)+1)}
+
+GR = GridSearchCV(DecisionTreeClassifier(random_state=42),
+                  param_grid=param_grid,
+                  scoring='accuracy',
+                  n_jobs=-1,cv=5)
+
+GR = GR.fit(X_train, y_train)
+
+
+# The number of nodes and the maximum depth of the tree.
+
+# In[17]:
+
+
+GR.best_estimator_.tree_.node_count, GR.best_estimator_.tree_.max_depth
+
+
+# These test errors are a little better than the previous ones. So it would seem the previous example overfit the data, but only slightly so.
+
+# In[18]:
+
+
+y_train_pred_gr = GR.predict(X_train)
+y_test_pred_gr = GR.predict(X_test)
+
+train_test_gr_error = pd.concat([measure_error(y_train, y_train_pred_gr, 'train'),
+                                 measure_error(y_test, y_test_pred_gr, 'test')],
+                                axis=1)
+
+
+# In[20]:
+
+
+train_test_gr_error
+
+
+# ## Question 5
+# 
+# * Re-split the data into `X` and `y` parts, this time with `residual_sugar` being the predicted (`y`) data. *Note:* if the indices were preserved from the `StratifiedShuffleSplit` output in question 2, they can be used again to split the data.
+# * Using grid search with cross validation, find a decision tree **regression** model that performs well on the test data set.
+# * Measure the errors on the training and test sets using mean squared error.
+# * Make a plot of actual *vs* predicted residual sugar.
+
+# In[21]:
+
+
+feature_cols = [x for x in data.columns if x != 'residual_sugar']
+
+# Create the data sets
+X_train = data.loc[train_idx, feature_cols]
+y_train = data.loc[train_idx, 'residual_sugar']
+
+X_test = data.loc[test_idx, feature_cols]
+y_test = data.loc[test_idx, 'residual_sugar']
+
+
+# In[25]:
+
+
+from sklearn.tree import DecisionTreeRegressor
+
+dr = DecisionTreeRegressor().fit(X_train, y_train)
+
+param_grid = {'max_depth':range(1, dr.tree_.max_depth+1, 2),
+              'max_features': range(1, len(dr.feature_importances_)+1)}
+
+GR_sugar = GridSearchCV(DecisionTreeRegressor(random_state=42),
+                     param_grid=param_grid,                    
+                     scoring='neg_mean_squared_error', cv=3,          # consider cv as we have equal divided data
+                      n_jobs=-1)
+
+GR_sugar = GR_sugar.fit(X_train, y_train)
+
+
+# The number of nodes and the maximum depth of the tree. This tree has lots of nodes, which is not so surprising given the continuous data.
+
+# In[26]:
+
+
+GR_sugar.best_estimator_.tree_.node_count, GR_sugar.best_estimator_.tree_.max_depth
+
+
+# The error on train and test data sets. Since this is continuous, we will use mean squared error.
+
+# In[27]:
+
+
+from sklearn.metrics import mean_squared_error
+
+y_train_pred_gr_sugar = GR_sugar.predict(X_train)
+y_test_pred_gr_sugar  = GR_sugar.predict(X_test)
+
+train_test_gr_sugar_error = pd.Series({'train': mean_squared_error(y_train, y_train_pred_gr_sugar),
+                                         'test':  mean_squared_error(y_test, y_test_pred_gr_sugar)},
+                                          name='MSE').to_frame().T
+
+train_test_gr_sugar_error
+
+
+# A plot of actual vs predicted residual sugar.
+
+# In[29]:
+
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+sns.set_context('notebook')
+sns.set_style('white')
+sns.set_palette('dark')
+
+get_ipython().run_line_magic('matplotlib', 'inline')
+
+
+# In[30]:
+
+
+fig = plt.figure(figsize=(6,6))
+ax = plt.axes()
+
+ph_test_predict = pd.DataFrame({'test':y_test.values,
+                                'predict': y_test_pred_gr_sugar}).set_index('test').sort_index()
+
+ph_test_predict.plot(marker='o', ls='', ax=ax)
+ax.set(xlabel='Test', ylabel='Predict', xlim=(0,35), ylim=(0,35));
+
+
+# ## Question 6 *(Optional)*
+# 
+# This question is optional as it requires an additional command line program (GraphViz) and Python library (PyDotPlus). GraphViz can be installed with a package manager on Linux and Mac. For PyDotPlus, either `pip` or `conda` (`conda install -c conda-forge pydotplus`) can be used to install the library.
+# 
+# Once these programs are installed:
+# 
+# * Create a visualization of the decision tree from question 3, where wine color was predicted and the number of features and/or splits are not limited.
+# * Create a visualization of the decision tree from question 4, where wine color was predicted but a grid search was used to find the optimal depth and number of features.
+# 
+# The decision tree from question 5 will likely have too many nodes to visualize.
+
+# In[32]:
+
+
+from io import StringIO
+from IPython.display import Image, display
+
+from sklearn.tree import export_graphviz
+
+try:
+    import pydotplus
+    pydotplus_installed = True
+    
+except:
+    print('PyDotPlus must be installed to execute the remainder of the cells associated with this question.')
+    print('Please see the instructions for this question for details.')
+    pydotplus_installed = False
+
+
+# The tree from question 3.
+
+# In[38]:
+
+
+if pydotplus_installed:
+    
+    # Create an output destination for the file
+    dot_data = StringIO()
+
+    export_graphviz(dt, out_file=dot_data, filled=True)
+    graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
+    print(graph)
+    # View the tree image
+    filename = 'wine_tree.png'
+    graph.write_png(filename)
+    img = Image(filename=filename)
+    display(img)
+    
+else:
+    print('This cell not executed because PyDotPlus could not be loaded.')
+
+
+# The tree fit with cross validation from question 4. This tree is much shallower than the previous one.
+
+# In[39]:
+
+
+if pydotplus_installed:
+    
+    # Create an output destination for the file
+    dot_data = StringIO()
+
+    export_graphviz(GR.best_estimator_, out_file=dot_data, filled=True)
+    graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
+
+    # View the tree image
+    filename = 'wine_tree_prune.png'
+    graph.write_png(filename)
+    img = Image(filename=filename) 
+    display(img)
+    
+else:
+    print('This cell not executed because PyDotPlus could not be loaded.')
+
+
+# ## Question 7
+# * Import the iris data and examine the features.
+# * We will be using all of them to predict species, but the species feature will need to be integer encoded.
+
+# In[40]:
+
+
+from __future__ import print_function
+import os
+data_path = ['data']
+import pandas as pd
+import numpy as np
+
+filepath = os.sep.join(data_path + ['Iris_Data.csv'])
+data = pd.read_csv(filepath, sep=',')
+
+
+# Convert the species feature to an integer. This is a quick way to do it using Pandas.
+
+# In[41]:
+
+
+data.head()
+
+
+# In[83]:
+
+
+data.dtypes
+
+
+# ## Question 8
+# 
+# * Use `StratifiedShuffleSplit` to split data into train and test sets that are stratified by species. If possible, preserve the indices of the split for question 11 below.
+# * Check the percent composition of each species level for both the train and test data sets.
+
+# In[84]:
+
+
+# All data columns except for species
+feature_cols = [x for x in data.columns if x not in 'species']
+
+
+# In[85]:
+
+
+from sklearn.model_selection import StratifiedShuffleSplit
+
+# Split the data into two parts with 1000 points in the test data
+# This creates a generator
+strat_shuff_split = StratifiedShuffleSplit(n_splits=1, test_size=30, random_state=42)
+
+# Get the index values from the generator
+train_idx, test_idx = next(strat_shuff_split.split(data[feature_cols], data['species']))
+
+# Create the data sets
+X_train = data.loc[train_idx, feature_cols]
+y_train = data.loc[train_idx, 'species']
+
+X_test = data.loc[test_idx, feature_cols]
+y_test = data.loc[test_idx, 'species']
+
+
+# Now check the percent composition of each species in the train and test iris_data sets. The iris_data set is equally distributed, as can be seen below.
+
+# In[86]:
+
+
+y_train.value_counts(normalize=True).sort_index()
+
+
+# In[87]:
+
+
+y_test.value_counts(normalize=True).sort_index()
+
+
+# ## Question 9
+# 
+# * Fit a decision tree classifier with no set limits on maximum depth, features, or leaves.
+# * Determine how many nodes are present and what the depth of this (very large) tree is.
+# * Using this tree, measure the prediction error in the train and test iris_data sets. What do you think is going on here based on the differences in prediction error?
+
+# In[88]:
+
+
+from sklearn.tree import DecisionTreeClassifier
+
+dt = DecisionTreeClassifier(random_state=42)
+dt = dt.fit(X_train, y_train)
+
+
+# The number of nodes and the maximum actual depth.
+
+# In[89]:
+
+
+dt.tree_.node_count, dt.tree_.max_depth
+
+
+# A function to return error metrics.
+# #### HINT: This is not a binary classification problem, IRIS data set has 3 classes in target column. Check on score functions
+
+# In[90]:
+
+
+from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+
+def measure_error(y_true, y_pred, label):
+    return pd.Series({'accuracy':accuracy_score(y_true, y_pred),
+                      'precision': precision_score(y_true, y_pred, average= 'macro',),
+                      'recall': recall_score(y_true, y_pred,average= 'macro'),
+                      'f1': f1_score(y_true, y_pred,average= 'macro')},
+                      name=label)
+
+
+# The decision tree predicts a little better on the training iris_data than the test iris_data, which is consistent with (mild)  overfitting. Also notice the perfect recall score for the training iris_data. In many instances, this prediction difference is even greater than that seen here. 
+
+# In[91]:
+
+
+# The error on the training and test data sets
+y_train_pred = dt.predict(X_train)
+y_test_pred = dt.predict(X_test)
+
+train_test_full_error = pd.concat([measure_error(y_train, y_train_pred, 'train'),
+                              measure_error(y_test, y_test_pred, 'test')],
+                              axis=1)
+
+train_test_full_error
+
+
+# ## Question 10
+# 
+# * Using grid search with cross validation, find a decision tree that performs well on the test iris_data set. Use a different variable name for this decision tree model than in question 9 so that both can be used in question 12.
+# * Determine the number of nodes and the depth of this tree.
+# * Measure the errors on the training and test sets as before and compare them to those from the tree in question 9.
+
+# In[92]:
+
+
+from sklearn.model_selection import GridSearchCV
+
+param_grid = {'max_depth':range(1, dt.tree_.max_depth+1, 2),
+              'max_features': range(1, len(dt.feature_importances_)+1)}
+
+GR = GridSearchCV(DecisionTreeClassifier(random_state=42),
+                  param_grid=param_grid,
+                  scoring='accuracy',
+                  n_jobs=-1,cv=5)
+
+GR = GR.fit(X_train, y_train)
+
+
+# The number of nodes and the maximum depth of the tree.
+
+# In[93]:
+
+
+GR.best_estimator_.tree_.node_count, GR.best_estimator_.tree_.max_depth
+
+
+# These test errors are a little better than the previous ones. So it would seem the previous example overfit the iris_data, but only slightly so.
+
+# In[94]:
+
+
+y_train_pred_gr = GR.predict(X_train)
+y_test_pred_gr = GR.predict(X_test)
+
+train_test_gr_error = pd.concat([measure_error(y_train, y_train_pred_gr, 'train'),
+                                 measure_error(y_test, y_test_pred_gr, 'test')],
+                                axis=1)
+train_test_gr_error
+
+
+# # Question 11
+# 
+# * Re-split the iris_data into `X` and `y` parts, this time with `species` being the predicted (`y`) iris_data. *Note:* if the indices were preserved from the `StratifiedShuffleSplit` output in question 8, they can be used again to split the iris_data.
+# * Using grid search with cross validation, find a decision tree **regression** model that performs well on the test iris_data set.
+# * Measure the errors on the training and test sets using mean squared error.
+# * Make a plot of actual *vs* predicted species.
+
+# In[95]:
+
+
+from sklearn.tree import DecisionTreeRegressor
+
+dr = DecisionTreeRegressor().fit(X_train, y_train)
+
+param_grid = {'max_depth':range(1, dr.tree_.max_depth+1, 2),
+              'max_features': range(1, len(dr.feature_importances_)+1)}
+
+GR_species = GridSearchCV(DecisionTreeRegressor(random_state=42),
+                     param_grid=param_grid,                    
+                     scoring='neg_mean_squared_error', cv=3,          # consider cv as we have equal divided data
+                      n_jobs=-1)
+
+GR_species = GR_species.fit(X_train, y_train)
+
+
+# The number of nodes and the maximum depth of the tree. This tree has lots of nodes, which is not so surprising given the continuous iris_data.
+
+# In[97]:
+
+
+GR_species.best_estimator_.tree_.node_count, GR_sugar.best_estimator_.tree_.max_depth
+
+
+# The error on train and test iris_data sets. Since this is continuous, we will use mean squared error.
+
+# In[99]:
+
+
+from sklearn.metrics import mean_squared_error
+
+y_train_pred_gr_species = GR_species.predict(X_train)
+y_test_pred_gr_species  = GR_species.predict(X_test)
+
+train_test_gr_species_error = pd.Series({'train': mean_squared_error(y_train, y_train_pred_gr_species),
+                                         'test':  mean_squared_error(y_test, y_test_pred_gr_species)},
+                                          name='MSE').to_frame().T
+
+train_test_gr_species_error
+
+
+# A plot of actual vs predicted species.
+
+# In[100]:
+
+
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+sns.set_context('notebook')
+sns.set_style('white')
+sns.set_palette('dark')
+
+get_ipython().run_line_magic('matplotlib', 'inline')
+
+
+# In[104]:
+
+
+fig = plt.figure(figsize=(6,6))
+ax = plt.axes()
+
+ph_test_predict = pd.DataFrame({'test':y_test.values,
+                                'predict': y_test_pred_gr_species}).set_index('test').sort_index()
+
+ph_test_predict.plot(marker='o', ls='', ax=ax)
+ax.set(xlabel='Test', ylabel='Predict', xlim=(0,4), ylim=(0,4));
+
+
+# ## Question 12 *(Optional)*
+# 
+# This question is optional as it requires an additional command line program (GraphViz) and Python library (PyDotPlus). GraphViz can be installed with a package manager on Linux and Mac. For PyDotPlus, either `pip` or `conda` (`conda install -c conda-forge pydotplus`) can be used to install the library.
+# 
+# Once these programs are installed:
+# 
+# * Create a visualization of the decision tree from question 9, where wine species was predicted and the number of features and/or splits are not limited.
+# * Create a visualization of the decision tree from question 10, where wine species was predicted but a grid search was used to find the optimal depth and number of features.
+# 
+# The decision tree from question 11 will likely have too many nodes to visualize.
+
+# In[105]:
+
+
+from io import StringIO
+from IPython.display import Image, display
+
+from sklearn.tree import export_graphviz
+
+try:
+    import pydotplus
+    pydotplus_installed = True
+    
+except:
+    print('PyDotPlus must be installed to execute the remainder of the cells associated with this question.')
+    print('Please see the instructions for this question for details.')
+    pydotplus_installed = False
+
+
+# The tree from question 9.
+
+# In[106]:
+
+
+if pydotplus_installed:
+    
+    # Create an output destination for the file
+    dot_data = StringIO()
+
+    export_graphviz(dt, out_file=dot_data, filled=True)
+    graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
+    print(graph)
+    # View the tree image
+    filename = 'Irish_tree.png'
+    graph.write_png(filename)
+    img = Image(filename=filename)
+    display(img)
+    
+else:
+    print('This cell not executed because PyDotPlus could not be loaded.')
+
+
+# The tree fit with cross validation from question 10. This tree is much shallower than the previous one.
+
+# In[108]:
+
+
+if pydotplus_installed:
+    
+    # Create an output destination for the file
+    dot_data = StringIO()
+
+    export_graphviz(GR_species.best_estimator_, out_file=dot_data, filled=True)
+    graph = pydotplus.graph_from_dot_data(dot_data.getvalue())
+
+    # View the tree image
+    filename = 'wine_tree_prune.png'
+    graph.write_png(filename)
+    img = Image(filename=filename) 
+    display(img)
+    
+else:
+    print('This cell not executed because PyDotPlus could not be loaded.')
+
+
+# In[ ]:
+
+
+
+
