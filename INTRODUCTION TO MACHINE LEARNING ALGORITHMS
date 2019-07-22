@@ -1,0 +1,259 @@
+__author__ = "Mahdi Moslemi"
+__email__ = "moslemi.mahdi@gmail.com"
+  
+  INTRODUCTION TO MACHINE LEARNING ALGORITHMS and their parameteres
+  
+  
+  ####   PARAMETERS   ####
+  
+  1)    SCORE:
+  
+         The coefficient R^2 is defined as (1 - u/v), where u is the residual sum of squares ((y_true - y_pred) ** 2).sum() 
+         and v is the total sum of squares ((y_true - y_true.mean()) ** 2).sum(). The best possible score is 1.0 and it can
+         be negative (because the model can be arbitrarily worse). A constant model that always predicts the expected value 
+         of y, disregarding the input features, would get a R^2 score of 0.0.
+         
+  2)    fit_intercept:
+  
+        If we consider it TRUE, data is expected to be already centered.
+        
+  3)    normalize:
+  
+        it will do the normalization on data, if it is considered FALSE, standardization of scale should be done (StandardScale)
+
+  4)    n_jobs:
+        
+        The number of jobs to use for the computation
+        
+  5)    
+  
+        The R2 score used when calling score on a regressor will use multioutput='uniform_average' to keep
+        consistent with metrics.r2_score. This will influence the score method of all the multioutput regressors 
+        (except for multioutput.MultiOutputRegressor). To specify the default value manually and avoid the warning, 
+        please either call metrics.r2_score directly or make a custom scorer with metrics.make_scorer 
+        (the built-in scorer 'r2' uses multioutput='uniform_average').
+        
+        
+  6)    coef_
+  
+        Estimated coefficients for the linear regression problem. If multiple targets are passed during the fit (y 2D),
+        this is a 2D array of shape (n_targets, n_features), while if only one target is passed, this is a 1D array of 
+        length n_features.
+ 
+ 
+ 
+ 
+####    MACHINE LEARNIGN ALGORITHMS   ####
+#     1__SUPREVISED LEARNING
+      
+      
+      1) LINEAR REGRESSION
+      
+      fits a linear model with coefficients 𝑤 = (𝑤1 , ..., 𝑤𝑝 ) to minimize the residual sum of squares between the observed
+      targets in the dataset, and the targets predicted by the linear approximation. Mathematically it solves a problem of 
+      the form:
+                                                      min ||𝑋𝑤 − 𝑦||2
+                                                      
+      
+      2)  LEAST SQUARES COMPLEXITY
+      
+      2_1) Ridge Regression
+      
+      Ridge regression addresses some of the problems of Ordinary Least Squares by imposing a penalty on the size of the 
+      coefficients. The ridge coefficients minimize a penalized residual sum of squares:
+      
+                                                    min ||𝑋𝑤 − 𝑦||2 + 𝛼||𝑤||2
+                                                    
+      The complexity parameter 𝛼 ≥ 0 controls the amount of shrinkage: the larger the value of 𝛼, the greater the amount of
+      shrinkage and thus the coefficients become more robust to collinearity
+      
+      ##  Setting the regularization parameter: generalized Cross-Validation
+      
+      RidgeCV implements ridge regression with built-in cross-validation of the alpha parameter. The object works in the same
+      way as GridSearchCV except that it defaults to Generalized Cross-Validation (GCV), an efficient form of leave-one-out 
+      cross-validation:
+            
+      2_2) Lasso
+      
+      The Lasso is a linear model that estimates sparse coefficients. It is useful in some contexts due to its tendency to 
+      prefer solutions with fewer non-zero coefficients, effectively reducing the number of features upon which the given 
+      solution is dependent.
+      Mathematically, it consists of a linear model with an added regularization term. The objective function to minimize is:
+      
+                                              min 1 ||𝑋𝑤 − 𝑦||2 + 𝛼||𝑤||1 𝑤 2𝑛samples
+                                              
+      The lasso estimate thus solves the minimization of the least-squares penalty with 𝛼||𝑤||1 added, where 𝛼 is a constant
+      and ||𝑤||1 is the l1-norm of the coefficient vector.
+      
+      The equivalence between alpha and the regularization parameter of SVM, C is given by alpha = 1 / C or 
+      alpha = 1 / (n_samples * C), depending on the estimator and the exact objective function optimized by the model.
+      
+      ## USING cross validation
+      
+      scikit-learn exposes objects that set the Lasso alpha parameter by cross-validation: LassoCV and LassoLarsCV .
+      LassoLarsCV is based on the Least Angle Regression algorithm.
+      
+      2_3) Elastic-Net
+      
+      ElasticNet is a linear regression model trained with both l1 and l2-norm regularization of the coefficients. This 
+      combination allows for learning a sparse model where few of the weights are non-zero like Lasso, while still main-taining
+      the regularization properties of Ridge. We control the convex combination of l1 and l2 using the l1_ratio parameter.
+      Elastic-net is useful when there are multiple features which are correlated with one another. Lasso is likely to pick one
+      of these at random, while elastic-net is likely to pick both.
+      A practical advantage of trading-off between Lasso and Ridge is that it allows Elastic-Net to inherit some of Ridge’s 
+      stability under rotation.
+      The objective function to minimize is in this case
+      
+                                  min 1 ||𝑋𝑤 − 𝑦||2 + 𝛼𝜌||𝑤||1 + 𝛼(1 − 𝜌)||𝑤||2 𝑤 2𝑛samples 2
+                                  
+      ## The class ElasticNetCV can be used to set the parameters alpha (𝛼) and l1_ratio (𝜌) by cross-validation.
+      
+      2_4) Logistic regression
+      
+      Logistic regression, despite its name, is a linear model for classification rather than regression. Logistic regression
+      is also known in the literature as logit regression, maximum-entropy classification (MaxEnt) or the log-linear classifier.
+      In this model, the probabilities describing the possible outcomes of a single trial are modeled using a logistic function.
+      Logistic regression is implemented in LogisticRegression. This implementation can fit binary, One-vs-Rest, or multinomial
+      logistic regression with optional l1, l2 or Elastic-Net regularization. Note that regularization is applied by default.
+      As an optimization problem, binary class l2 penalized logistic regression minimizes the following cost function:
+      
+                                                min 1/2*𝑤𝑇 𝑤 + 𝐶 ∑︁ log(exp(−𝑦𝑖(𝑋𝑖𝑇 𝑤 + 𝑐)) + 1
+                              
+      Similarly, l1 regularized logistic regression solves the following optimization problem:
+      
+                                                  min ‖𝑤‖1 + 𝐶 ∑︁ log(exp(−𝑦𝑖(𝑋𝑖𝑇 𝑤 + 𝑐)) + 1
+                                                          
+      Elastic-Net regularization is a combination of l1 and l2, and minimizes the following cost function:
+
+                                              min 𝑤𝑇 𝑤 + 𝜌‖𝑤‖1 + 𝐶 ∑︁ log(exp(−𝑦𝑖(𝑋𝑖𝑇 𝑤 + 𝑐)) + 1
+                                              
+      Note that, in this notation, it’s assumed that the target 𝑦𝑖 takes values in the set −1, 1 at trial 𝑖. We can also see
+      that Elastic-Net is equivalent to l1 when 𝜌 = 1 and equivalent to l2 when 𝜌 = 0.
+
+      
+      The solvers implemented in the class LogisticRegression are “liblinear”, “newton-cg”, “lbfgs”, “sag” and “saga”
+      
+      The “lbfgs”, “sag” and “newton-cg” solvers only support l2 regularization or no regularization, and are found to
+      converge faster for some high-dimensional data. Setting multi_class to “multinomial” with these solvers learns a
+      true multinomial logistic regression model5, which means that its probability estimates should be better calibrated
+      than the default “one-vs-rest” setting.
+      The “sag” solver uses Stochastic Average Gradient descent6. It is faster than other solvers for large datasets, when
+      both the number of samples and the number of features are large.
+      The “saga” solver7 is a variant of “sag” that also supports the non-smooth penalty="l1". This is there- fore the solver
+      of choice for sparse multinomial logistic regression. It is also the only solver that supports penalty="elasticnet".
+      The “lbfgs” is an optimization algorithm that approximates the Broyden–Fletcher–Goldfarb–Shanno algorithm8, which belongs
+      to quasi-Newton methods. The “lbfgs” solver is recommended for use for small data-sets but for larger datasets its 
+      performance suffers.
+      
+      
+      2_5) Stochastic Gradient Descent - SGD
+      
+      Stochastic gradient descent is a simple yet very efficient approach to fit linear models. It is particularly useful when
+      the number of samples (and the number of features) is very large. The partial_fit method allows online/out-of-core learning.
+      The classes SGDClassifier and SGDRegressor provide functionality to fit linear models for classifica- tion and regression 
+      using different (convex) loss functions and different penalties. E.g., with loss="log", SGDClassifier fits a logistic 
+      regression model, while with loss="hinge" it fits a linear support vector machine (SVM).
+      
+      
+      2_6) POLYNOMIAL REGRESSION: extending linear models with basis functions
+      
+      2_7) Kernel ridge regression
+      
+      Kernel ridge regression (KRR) combines Ridge Regression (linear least squares with l2-norm regularization) with 
+      the kernel trick. It thus learns a linear function in the space induced by the respective kernel and the data. For 
+      non-linear kernels, this corresponds to a non-linear function in the original space
+      
+      2_8) Support Vector Machines
+      
+      Support vector machines (SVMs) are a set of supervised learning methods used for classification, regression and outliers
+      detection.
+      
+      
+####  CLASSIFICATION #####
+
+# SVC, NuSVC and LinearSVC are classes capable of performing multi-class classification on a dataset.
+
+# Nearest Neighbors Classification
+
+scikit-learn implements two different nearest neighbors classifiers: KNeighborsClassifier implements learn- ing based on the
+𝑘 nearest neighbors of each query point, where 𝑘 is an integer value specified by the user. RadiusNeighborsClassifier implements
+learning based on the number of neighbors within a fixed radius 𝑟 of each training point, where 𝑟 is a floating-point value 
+specified by the user.
+
+
+### Gaussian Processes
+
+Gaussian Processes (GP) are a generic supervised learning method designed to solve regression and probabilistic classification
+problems.
+The advantages of Gaussian processes are:
+• The prediction interpolates the observations (at least for regular kernels).
+• The prediction is probabilistic (Gaussian) so that one can compute empirical confidence intervals and decide based on those 
+  if one should refit (online fitting, adaptive fitting) the prediction in some region of interest.
+• Versatile: different kernels can be specified. Common kernels are provided, but it is also possible to specify custom kernels.
+
+The disadvantages of Gaussian processes include:
+• They are not sparse, i.e., they use the whole samples/features information to perform the prediction.
+• They lose efficiency in high dimensional spaces – namely when the number of features exceeds a few dozens.
+
+
+The GaussianProcessClassifier implements Gaussian processes (GP) for classification purposes, more specifically for probabilistic
+classification, where test predictions take the form of class probabilities
+
+
+## Kernels for Gaussian Processes
+
+Kernels (also called “covariance functions” in the context of GPs) are a crucial ingredient of GPs which determine the shape of 
+prior and posterior of the GP. They encode the assumptions on the function being learned by defining the “similarity” of two 
+datapoints combined with the assumption that similar datapoints should have similar target values.
+
+
+
+## Naive Bayes
+
+Naive Bayes methods are a set of supervised learning algorithms based on applying Bayes’ theorem with the “naive” assumption
+of conditional independence between every pair of features given the value of the class variable. Bayes’ theorem states the 
+following relationship, given class variable 𝑦 and dependent feature vector 𝑥1 through 𝑥𝑛, :
+
+                                        𝑃(𝑦 | 𝑥1,...,𝑥𝑛) = 𝑃(𝑦)𝑃(𝑥1,...𝑥𝑛 | 𝑦) 𝑃(𝑥1,...,𝑥𝑛)
+                                        
+Using the naive conditional independence assumption that
+𝑃(𝑥𝑖|𝑦,𝑥1,...,𝑥𝑖−1,𝑥𝑖+1,...,𝑥𝑛) = 𝑃(𝑥𝑖|𝑦), for all 𝑖, this relationship is simplified to
+
+                                        𝑃(𝑦 | 𝑥1,...,𝑥𝑛) = 𝑃(𝑦)∏︀𝑛𝑖=1 𝑃(𝑥𝑖 | 𝑦) 𝑃(𝑥1,...,𝑥𝑛)
+                                        
+Since 𝑃 (𝑥1 , . . . , 𝑥𝑛 ) is constant given the input, we can use the following classification rule:
+
+                                                𝑃(𝑦 | 𝑥1,...,𝑥𝑛) ∝ 𝑃(𝑦)∏︁𝑃(𝑥𝑖 | 𝑦)
+                                                
+                                                     𝑦ˆ=argmax 𝑃(𝑦)∏︁𝑃(𝑥𝑖 |𝑦)
+                                                 
+and we can use Maximum A Posteriori (MAP) estimation to estimate 𝑃(𝑦) and 𝑃(𝑥𝑖 | 𝑦); the former is then the
+relative frequency of class 𝑦 in the training set.   
+
+## Decision Trees
+
+Decision Trees (DTs) are a non-parametric supervised learning method used for classification and regression. The goal is to 
+create a model that predicts the value of a target variable by learning simple decision rules inferred from the data features.
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+  
+      
