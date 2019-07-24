@@ -1,0 +1,16 @@
+## EXPLANATION ON ENCODING THE DATA
+
+
+1) boolean encoding:                 change "yes" and "no" to "True" , and "False"
+
+
+2) Label encoding:                   categorize labeling to integers,
+
+
+3) one hot encoding:                 remove duplicated datas
+
+
+4)removing NaN from columns:         using fillna() or dropna()
+
+
+
