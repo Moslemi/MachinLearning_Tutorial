@@ -1,0 +1,64 @@
+### Example of Machine Learning Questions ###
+
+
+1) A Jupyter cell that contains code needs to have its type set to Code to be able to run it.
+
+2) The series object series_obj has 5 items with the index labels 'row 1' through 'row 5', and the integer 
+indexes 0 through 4 respectively. The command series_obj['row 3'] is equivalent to series_obj[2] .
+
+3) In the dropna() DataFrame method, what will the argument axis=1 cause ... 
+   ANSWERE: drop columns that contain missing values, instead of rows
+    
+4) You call the method duplicated() on an object and get a True value for row 8. This means that this row is 
+   unique and has no duplicates.  
+   ANSWERE: FALSE
+   
+5) What should you consider when appending a DataFrame to itself?
+   Indexes will be duplicated and therefore inconsistent.
+   
+6) Pie charts represent data attribute values using a circle and slices that comprise it. A whole and entire set of categorical
+ data is represented by the completely circle, and proportions of observations that fall into each category are represented by
+ proportionate pie slices
+ 
+ 
+ 7) Pearson correlation assumption :::
+ 
+    1_ Normally disturbuted
+    2_ Linearly related
+    3_ Continues numeric variable
+
+8) Binomial variable:
+   the variables which are just 1 or 0, so it is nit continues
+   
+9) Multinomial variable
+   the variable which contain multi variables but it is not countinues
+
+10) Spearmans rank assumption :::
+    
+    1_ your variables are ordinal (in other words numeric but able to be ranked like a categorical variable)
+    2_ your variables are related non linearly
+    3_ your data is non normally distributed
+    
+11) Chi Squre test :::
+
+    1_ if P < 0.05 reject null hypothesis and consider the variables are correlated
+    2_ if P > 0.05 reject null hypothesis and consider the variables are independent
+    
+
+ 12) Why it is important to scale the data
+     1_ to prevent different magnitute along the data cause misleading statics or errornous
+     2_ to prepare data for machine learning
+     
+ 12_1) Normalization
+ putting all the observation on a relative scale between the value of 0 and 1
+ $$ so it is like considering the value/ some of all the observation in variable $$
+ 
+ 
+ 12_2) Standardization
+ rescaling data so it has a zero mean and unit variance
+ 
+ 
+ 
+   
+ 
+ 
