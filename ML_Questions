@@ -58,7 +58,66 @@ indexes 0 through 4 respectively. The command series_obj['row 3'] is equivalent 
  rescaling data so it has a zero mean and unit variance
  
  
+  ##### Vocabulary in Machine Learning #####
+ 
+ Features:   term variable, coulmns, fields, and attribute.
+ Instance:   terms row observation, data point, value and cases
+ Data    :   terms predictor or set of peredictor variable
+ Train model
+ Test model
+ 
+ Supervised method:  make prediction from labeled data
+ Unsupervised method: make prediction from unlabeled data
+ 
+ 
+ 
+ ### Factore Analysis Assumption ###
+ 
+ Features are metric
+ Features are continous or ordinal
+ There is (r > 0.3) correlation between the features in your dataset
+ you have >100 observation and >5 observations per feature
+ your sample is homogenous
+ 
+ 
+ 
+ ### Singular Value Decomposition (SVD) ###
+ 
+ A linear Algebra method that decomposes a matrix into three resultant matrices to reduce information 
+ redundancy and noise.
+ 
+ Most commonly used for principal component analysy
+ 
+ 
+ ## Explained variace ration
+ 
+ the explained variace ratio tells us how much information is compressed into the first few components
+ The goal for using PCA (principle component argument) method is to remove the outliers and data which are not necessary....
+ PCA shows how much information each row has.
+ 
  
    
+ ### finding OUTLIERS in the data
+ 
+ for this purpose we can make a box plot to see the outliers or, do the calculation as follow:
+ IQR = value 75% - value 25%
+ P = 1.5 * IQR
+ value 25% - P = new_min
+ value 75% + P = new_max
+ Then we compar min and max with new_min and new_max to figure out we have outlier or not.
  
  
+ ### Multivariet Outlier detection
+ 
+ we use this method to detect outliers between multi variables. these method are such as box_plot or scatter_plot
+ 
+ 
+ ### DBSCAN
+
+The parameters should result in outliers making up less than 5% of the data.
+the min_sample parameter should start with a low value.
+eps value should be small like 0.1
+
+
+
+
