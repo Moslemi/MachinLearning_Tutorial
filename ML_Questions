@@ -1,3 +1,7 @@
+__author__ = "Mahdi Moslemi"
+__email__ = "moslemi.mahdi@gmail.com"
+
+
 ### Example of Machine Learning Questions ###
 
 
@@ -119,5 +123,70 @@ the min_sample parameter should start with a low value.
 eps value should be small like 0.1
 
 
+### K-Mean model ###
+deponds on:
+the nummber of cluster centers peresent
+Nearest mean value (measured in euclidian distance between observation)
 
+K mean use cases:
+1_market price and cost modeling
+2_customer segmentation
+3_insurance fraud detection
+4_Hedge fund classification
+
+$$ Important notes on K-mean model:
+1_  Always scale data before fitting the model
+2_  Look at the scatter plote or a data table to estimate the number of centroids or cluster center, to set the k parameter in the model
+
+$$ Precesion ::: a measure of model releavancy  
+$$ Recall    ::: a measure of model completeness
+
+
+
+
+### Hierarchical analysing ###
+
+Hospital resource management
+Bussiness process managmenet
+customre segment
+social analysis network
+
+$$ Distance metric    ::: ecluidan , manhatan, cosin 
+$$ Linkage parameter  ::: ward, comlet, average
+
+
+
+
+#### KNN MODEL ####
+
+Stock price prediction
+Recommendation system
+credit risk analysis
+predictive modeling
+
+KNN on larg data takes a lot of time
+
+we use it usually when the data has little noise
+dataset is labeled
+dataset only contain relevent features
+dataset has distinguishable subgroups
+
+$$$$ ( High precisios + Low recall )    means few results were returned but mot of them was correct. 
+
+
+
+##### Network Analysis #####
+
+Social media marketing strategy
+infrastructure system design
+Financial risk management
+Public health management
+
+
+NETWORK:  A body of connected data thats evaluated during graph analysis
+Graph  :  A data visualisation schematic dipicting the data that comprises a network
+
+Graph size : number of edges in a graph
+Graph order : number of nodes in a graph
+Degree : The number of edges connected with a vertex with loops, connected 2 ice.
 
