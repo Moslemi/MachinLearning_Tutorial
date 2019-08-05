@@ -190,3 +190,22 @@ Graph size : number of edges in a graph
 Graph order : number of nodes in a graph
 Degree : The number of edges connected with a vertex with loops, connected 2 ice.
 
+
+#### Linear Regression ####
+
+All variables are continous numeric, but not categorical
+Data is free of missing values or outlier
+there is a linear relation between predictor and predictant
+All predictor are independent of each others
+Reseduals(aka prediction errors) are normally distributed
+
+
+
+#### Logistic Regression Assumption ####
+
+Data is free of missing value
+The predicted variable is binary or categoraly encoded(order value)
+All predictors are independent of eachother
+we should atleat usually have 50 observation
+
+
