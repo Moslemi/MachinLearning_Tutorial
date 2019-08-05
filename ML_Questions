@@ -209,3 +209,30 @@ All predictors are independent of eachother
 we should atleat usually have 50 observation
 
 
+#### Naive Bayes Classifier #####
+predict the liklihood that an event occure or not
+
+$$ we have 3 types of Naive Bayes method:   1) Multinomial    2) Bernouli   3) Gaussian
+ 
+ 1_ Multinomial :: is good when your feature (cathegorical ,or continues) describe frequency count(word count)
+ 
+ 2_ Bernouli    :: good for making prediction from binary features
+ 
+ 3_ Gaussian    :: good for making predictions from normally distributed features
+ 
+ 
+ 
+ $$ Naive base use case :: 1) spam detection   2) Customre classification   3)Credit risk prediction   4) Health risk prediction 
+ 
+ $$ Naive Base assumption :: 
+ 
+ 1) Predictors are independent of each others.  
+ 2) A perior assumption : this is a assumption hat the past conditions are still true. and we make assumtion with historical values
+    ,and we get incorrect results if the present circumstance has changed. (like what we have in regression analysis)
+
+
+  
+
+
+
+
