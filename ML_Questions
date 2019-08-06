@@ -231,6 +231,13 @@ $$ we have 3 types of Naive Bayes method:   1) Multinomial    2) Bernouli   3) G
     ,and we get incorrect results if the present circumstance has changed. (like what we have in regression analysis)
 
 
+#### PLOTLY ATRIBUTES #####
+
+1) Traces : these are objects that describe a single variable of data in a graph, like heatmap or scatter
+2) Layouts: you use these attributes to set layouts elements for your plot . for example, the title, x-axis or annotation.
+
+
+
   
 
 
